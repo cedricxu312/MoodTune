@@ -198,7 +198,7 @@ const styles = {
     flex: 1,
     minWidth: '300px',
     order: 1,
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       order: 2,
       textAlign: 'center',
     },
@@ -208,10 +208,10 @@ const styles = {
     fontWeight: '800',
     lineHeight: 1.2,
     marginBottom: '1rem',
-    '@media (max-width: 1024px)': {
+    '@media (maxWidth: 1024px)': {
       fontSize: '5rem',
     },
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       fontSize: '3.5rem',
       textAlign: 'center',
     },
@@ -220,7 +220,7 @@ const styles = {
     fontSize: '1.3rem',
     fontWeight: '600',
     marginBottom: '1rem',
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       fontSize: '1.1rem',
       textAlign: 'center',
     },
@@ -230,7 +230,7 @@ const styles = {
     lineHeight: 1.6,
     marginBottom: '1rem',
     maxWidth: '600px',
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       fontSize: '0.95rem',
       textAlign: 'center',
       maxWidth: '100%',
@@ -248,7 +248,7 @@ const styles = {
     fontWeight: '600',
     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     transition: 'transform 0.2s ease, background-color 0.2s ease',
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       width: '100%',
       padding: '0.8rem 1.5rem',
       fontSize: '1rem',
@@ -265,7 +265,7 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     order: 2,
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       order: 1,
       minWidth: '250px',
       marginBottom: '2rem',
@@ -275,7 +275,7 @@ const styles = {
     width: '100%',
     maxWidth: '400px',
     height: 'auto',
-    '@media (max-width: 768px)': {
+    '@media (maxWidth: 768px)': {
       maxWidth: '300px',
     },
   },
@@ -288,7 +288,7 @@ Object.keys(styles).forEach(key => {
   if (styles[key]['@media (max-width: 768px)']) {
     processedStyles[key]['@media (max-width: 768px)'] = styles[key]['@media (max-width: 768px)'];
   }
-  if (styles[key]['@media (max-width: 1024px)']) {
-    processedStyles[key]['@media (max-width: 1024px)'] = styles[key]['@media (max-width: 1024px)'];
+  if (styles[key]['@media (maxWidth: )']) {
+    processedStyles[key]['@media (maxWidth: 1024px)'] = styles[key]['@media (max-width: 1024px)'];
   }
 });

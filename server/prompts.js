@@ -176,20 +176,17 @@ Follow these strict rules:
 
 
 function createSecondPrompt(moodDescriptions) {
-    return `You are a music recommendation system. Your job is to recommend real, popular songs based on the user’s emotional state ("mood"), key ideas ("themes"), and musical preferences ("recommended_genres").
-
+    return `You are a music recommendation system. Your job is to recommend real, popular songs based on the input mood, themes, and genres.
   
   Follow these rules strictly:
   
-  1. All recommended songs must strongly match the given "mood" and any listed "themes" (if present).
-  2. Only recommend songs that match **all** genres listed under "recommended_genres". The songs should reflect the musical style and emotional tone of those genres.
-  3. If no known songs exist that match all genres, relax the requirement and find songs that match at least one of the genres while still fitting the mood.
-  5. Only recommend **popular, well-known** songs. If you're not sure a song exists or if it fits the criteria, do **not** include it.
-  6. Do **not** generate fake song titles or speculative content.
-  7. Recommend a **5 songs** for each genre.
-  8. If there are too few valid songs, return fewer songs instead of guessing or inventing.
-  9.Output Format: Return your answer in valid JSON only, using double quotes for all keys and string values. Do not include any explanations or extra text. Do not include any text before or after the JSON. Do not wrap the response in code blocks. Only return valid JSON.
-  
+  1. Prioritize matching mood + genres, but relax genre match if too few valid songs exist.
+  2. Avoid recommending the same artist or song as in past outputs.
+  3. Max 1 track per artist.
+  4. Recommend up to 5 songs per genre. If fewer than 5 exist, return fewer instead of guessing or repeating.
+  5. Only recommend songs that exist and are well-known. Do not invent.
+  6. Output Format: Return your answer in valid JSON only, using double quotes for all keys and string values.
+
   ---
   
   **Output Format:**
@@ -210,82 +207,6 @@ function createSecondPrompt(moodDescriptions) {
     ...
   }
   
-  ---
-  
-  **Example Input 1:**  
-  {  
-    "mood": "romantic excitement",  
-    "themes": ["romantic", "joyful"],  
-    "recommended_genres": ["k-pop", "indie pop", "r&b"]  
-  }  
-  
-  **Example Output 1:**  
-  {
-    "k-pop": {
-      "TWICE": "Talk that Talk",
-      "SEVENTEEN": "Darl+ing",
-      "IU": "Blueming",
-      "STAYC": "ASAP",
-      "BTS": "Serendipity"
-    },
-    "indie pop": {
-      "Dayglow": "Can I Call You Tonight?",
-      "Clairo": "Sofia",
-      "Peach Tree Rascals": "Mariposa",
-      "Faye Webster": "Right Side of My Neck",
-      "Carly Rae Jepsen": "Run Away With Me"
-    },
-    "r&b": {
-      "SZA": "Saturn",
-      "Daniel Caesar": "Best Part (feat. H.E.R.)",
-      "RINI": "My Favourite Clothes",
-      "Tinashe": "Touch & Go (feat. 6LACK)",
-      "Amber Mark": "Love Me Right"
-    }
-  }
-
-  
-  ---
-
-  **Example Input 2:**  
-  { 
-    "mood": "heartbroken sadness", 
-    "themes": ["breakup", "emotional release", "loneliness", "healing"], 
-    "recommended_genres": ["indie rock", "sad pop", "r&b", "alternative"] 
-  }
-
-  **Example Output 2:**  
-  {    
-    "indie rock": {      
-      "Phoebe Bridgers": "Motion Sickness",     
-      "Bon Iver": "Skinny Love",      
-      "The National": "I Need My Girl",      
-      "Radiohead": "Exit Music (For a Film)",      
-      "Death Cab for Cutie": "I Will Follow You into the Dark"    
-    },    
-    "sad pop": {      
-      "Olivia Rodrigo": "traitor",      
-      "Billie Eilish": "when the party's over",      
-      "Lewis Capaldi": "Someone You Loved",      
-      "Gracie Abrams": "21",      
-      "Adele": "Easy On Me"    
-    },    
-    "r&b": {      
-      "SZA": "Nobody Gets Me",      
-      "Frank Ocean": "Ivy",      
-      "Giveon": "Heartbreak Anniversary",      
-      "Jazmine Sullivan": "Lost One",      
-      "H.E.R.": "Damage"    
-    },    
-    "alternative": {      
-      "Coldplay": "The Scientist",      
-      "Lana Del Rey": "Young and Beautiful",      
-      "Keane": "Somewhere Only We Know",      
-      "Ben Howard": "Promise",      
-      "Mazzy Star": "Fade Into You"    
-    }  
-  }
-
   ---
 
   Now respond only with valid JSON. Analyze the following input and generate matching songs:

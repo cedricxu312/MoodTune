@@ -11,7 +11,8 @@ export default function NavBar({ isAuthenticated, isGuest, onLogout, username })
   return (
     <nav style={styles.navbar}>
       <div style={styles.left}>
-        <Link to="/" style={styles.link}>Home</Link>
+        {/* <Link to="/" style={styles.link}>Home</Link> */}
+        <Link to="/" style={styles.link}><img src="/file.svg(2)" alt="Home" width="24" /></Link>
         {isAuthenticated && (
           <>
             <Link to="/search" style={styles.link}>Search</Link>
