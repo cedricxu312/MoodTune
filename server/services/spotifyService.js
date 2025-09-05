@@ -95,7 +95,27 @@ class SpotifyService {
    * @param {string} accessToken - User's Spotify access token
    */
   async addTracksToPlaylist(validTracks, playlistId, accessToken) {
-    const uniqueUris = [...new Set(validTracks.map(track => track.uri))];
+    // Validate input parameters
+    if (!validTracks || !Array.isArray(validTracks)) {
+      console.error('❌ Invalid validTracks parameter:', validTracks);
+      throw new Error('validTracks must be a valid array');
+    }
+
+    if (!playlistId) {
+      console.error('❌ Missing playlistId parameter');
+      throw new Error('playlistId is required');
+    }
+
+    if (!accessToken) {
+      console.error('❌ Missing accessToken parameter');
+      throw new Error('accessToken is required');
+    }
+
+    // Filter out tracks without URIs and create unique list
+    const tracksWithUris = validTracks.filter(track => track && track.uri);
+    const uniqueUris = [...new Set(tracksWithUris.map(track => track.uri))];
+
+    console.log(`📊 Processing ${validTracks.length} tracks, ${tracksWithUris.length} with URIs, ${uniqueUris.length} unique URIs`);
 
     if (uniqueUris.length === 0) {
       console.warn('⚠️ No valid track URIs to add.');

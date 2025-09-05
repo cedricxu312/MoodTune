@@ -115,7 +115,7 @@ export default function MoodForm({ onMoodFetched, setShowCreateButton, showCreat
    */
   const handleCreatePlaylist = () => {
     const popup = window.open(
-      'http://127.0.0.1:3001/create-playlist', 
+      'http://localhost:3001/create-playlist', 
       'spotify-auth', 
       'width=500,height=600'
     );

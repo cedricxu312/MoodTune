@@ -101,4 +101,79 @@ router.delete('/mood/:id', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/stats
+ * @desc    Get recommendation statistics for debugging
+ * @access  Public
+ */
+router.get('/stats', (req, res) => {
+  try {
+    const stats = moodService.getRecommendationStats();
+    res.json({
+      success: true,
+      message: 'Recommendation statistics retrieved successfully',
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error getting recommendation stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve recommendation statistics',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   POST /api/clear-history
+ * @desc    Clear recommendation history (useful for testing)
+ * @access  Public
+ */
+router.post('/clear-history', (req, res) => {
+  try {
+    moodService.clearRecommendationHistory();
+    res.json({
+      success: true,
+      message: 'Recommendation history cleared successfully'
+    });
+  } catch (error) {
+    console.error('Error clearing recommendation history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to clear recommendation history',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/db-status
+ * @desc    Check database connection status and pool health
+ * @access  Public
+ */
+router.get('/db-status', async (req, res) => {
+  try {
+    const db = require('../db');
+    const isConnected = await db.testConnection();
+    const poolStatus = db.getPoolStatus();
+    
+    res.json({
+      success: true,
+      message: 'Database status retrieved successfully',
+      data: {
+        connected: isConnected,
+        poolStatus,
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error checking database status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check database status',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

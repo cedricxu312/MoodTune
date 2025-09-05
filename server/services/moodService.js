@@ -2,6 +2,36 @@ const db = require('../db');
 const openaiService = require('./openaiService');
 const spotifyService = require('./spotifyService');
 
+// Simple in-memory cache to track recent recommendations (last 10 requests)
+// In production, you might want to use Redis or database for persistence
+const recentRecommendations = {
+  tracks: new Set(),
+  artists: new Set(),
+  maxHistory: 50, // Keep track of last 50 tracks
+  addRecommendations: function(tracks) {
+    tracks.forEach(track => {
+      this.tracks.add(track.name.toLowerCase() + '|' + track.artist.toLowerCase());
+      this.artists.add(track.artist.toLowerCase());
+      
+      // Maintain size limit
+      if (this.tracks.size > this.maxHistory) {
+        const firstTrack = this.tracks.values().next().value;
+        this.tracks.delete(firstTrack);
+      }
+      if (this.artists.size > this.maxHistory) {
+        const firstArtist = this.artists.values().next().value;
+        this.artists.delete(firstArtist);
+      }
+    });
+  },
+  isRecentlyRecommended: function(trackName, artistName) {
+    const key = trackName.toLowerCase() + '|' + artistName.toLowerCase();
+    return this.tracks.has(key);
+  },
+  isArtistRecentlyRecommended: function(artistName) {
+    return this.artists.has(artistName.toLowerCase());
+  }
+};
 class MoodService {
   /**
    * Process a mood and generate song recommendations
@@ -18,12 +48,19 @@ class MoodService {
       // Step 1: Get mood analysis from GPT
       const moodDescriptions = await openaiService.getMoodAnalysis(mood);
       
-      // Step 2: Save mood to database
-      const moodInsert = await db.query(
-        'INSERT INTO moods (mood, user_id) VALUES ($1, $2) RETURNING id',
-        [moodDescriptions.mood || mood, userId]
-      );
-      const moodId = moodInsert.rows[0].id;
+      // Step 2: Save mood to database with error handling
+      let moodId;
+      try {
+        const moodInsert = await db.query(
+          'INSERT INTO moods (mood, user_id) VALUES ($1, $2) RETURNING id',
+          [moodDescriptions.mood || mood, userId]
+        );
+        moodId = moodInsert.rows[0].id;
+      } catch (dbError) {
+        console.error('Database error saving mood:', dbError.message);
+        // Continue without saving to database - we can still return recommendations
+        moodId = null;
+      }
 
       // Step 3: Generate playlist metadata
       const playlistMeta = openaiService.generatePlaylistMeta(moodDescriptions);
@@ -37,22 +74,58 @@ class MoodService {
       // Step 6: Search for valid tracks on Spotify
       const validTrackInfo = await spotifyService.searchValidTracks(songData);
       
-      // Step 7: Save tracks to database
-      for (const track of validTrackInfo) {
-        await db.query(
-          'INSERT INTO tracks (mood_id, name, artist, url) VALUES ($1, $2, $3, $4)',
-          [moodId, track.name, track.artist, track.spotifyUrl]
-        );
+      // Step 6.5: Filter out recently recommended tracks to prevent repetition
+      const filteredTrackInfo = validTrackInfo.filter(track => 
+        !recentRecommendations.isRecentlyRecommended(track.name, track.artist)
+      );
+      
+      console.log(`🔄 Anti-repetition: ${validTrackInfo.length} total tracks, ${filteredTrackInfo.length} after filtering`);
+      
+      // If we filtered out too many tracks, add some back but avoid both track and artist repetition
+      let finalTrackInfo = filteredTrackInfo;
+      if (filteredTrackInfo.length < 10) {
+        const additionalTracks = validTrackInfo.filter(track => 
+          !filteredTrackInfo.some(ft => ft.artist.toLowerCase() === track.artist.toLowerCase()) &&
+          !recentRecommendations.isArtistRecentlyRecommended(track.artist) &&
+          !recentRecommendations.isRecentlyRecommended(track.name, track.artist)
+        ).slice(0, 15 - filteredTrackInfo.length);
+        finalTrackInfo = [...filteredTrackInfo, ...additionalTracks];
+        console.log(`🔄 Added ${additionalTracks.length} additional tracks to reach ${finalTrackInfo.length} total`);
       }
+      
+      // Step 7: Save tracks to database with error handling
+      if (moodId) {
+        for (const track of finalTrackInfo) {
+          try {
+            await db.query(
+              'INSERT INTO tracks (mood_id, name, artist, url) VALUES ($1, $2, $3, $4)',
+              [moodId, track.name, track.artist, track.spotifyUrl]
+            );
+          } catch (dbError) {
+            console.error(`Database error saving track ${track.name}:`, dbError.message);
+            // Continue saving other tracks
+          }
+        }
+      } else {
+        console.log('⚠️ Skipping track database save - no mood ID available');
+      }
+      
+      // Step 7.5: Update recommendation history
+      recentRecommendations.addRecommendations(finalTrackInfo);
 
-      // Step 8: Store playlist data for Spotify OAuth flow
+            // Step 8: Store playlist data for Spotify OAuth flow
       // This will be used when the user creates a playlist
-      global.lastPlaylistData = { playlistMeta, validTrackInfo };
-
+      global.lastPlaylistData = { playlistMeta, validTrackInfo: finalTrackInfo };
+      console.log('💾 Stored playlist data globally:', {
+        playlistMeta,
+        trackCount: finalTrackInfo.length,
+        firstTrack: finalTrackInfo[0]?.name || 'none'
+      });
+      
       // Step 9: Return complete mood data
       const result = { 
         moodDescriptions, 
-        validTrackInfo,
+        validTrackInfo: finalTrackInfo,
         playlistMeta 
       };
 
@@ -63,6 +136,28 @@ class MoodService {
       console.error('Error processing mood:', error);
       throw error;
     }
+  }
+
+  /**
+   * Get recommendation statistics for debugging
+   * @returns {Object} Statistics about recent recommendations
+   */
+  getRecommendationStats() {
+    return {
+      totalTracks: recentRecommendations.tracks.size,
+      totalArtists: recentRecommendations.artists.size,
+      maxHistory: recentRecommendations.maxHistory,
+      recentTracks: Array.from(recentRecommendations.tracks).slice(-10),
+      recentArtists: Array.from(recentRecommendations.artists).slice(-10)
+    };
+  }
+
+  /**
+   * Clear recommendation history (useful for testing)
+   */
+  clearRecommendationHistory() {
+    recentRecommendations.tracks.clear();
+    recentRecommendations.artists.clear();
   }
 
   /**

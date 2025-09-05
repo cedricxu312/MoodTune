@@ -16,7 +16,7 @@ function createFirstPrompt(mood) {
   7. Include Artists (Conditional):
      - If the input explicitly mentions artists, include them in an "artist" field as an array.
      - **Detect artist names regardless of letter casing** (e.g., "newjeans", "NewJeans", and "NEWJEANS" should all be treated as "NewJeans").
-     - Capitalize artist names in their most widely recognized form (e.g., “NewJeans”, “BTS”, “Taylor Swift”).
+     - Capitalize artist names in their most widely recognized form (e.g., "NewJeans", "BTS", "Taylor Swift").
      - If no artist is mentioned, omit the "artist" field entirely.
   
   8. Contextual Genre Inference:
@@ -171,21 +171,28 @@ Follow these strict rules:
   **Input:** ${JSON.stringify(parsedFirst, null, 2)}`;
   }
 
-
-
-
-
 function createSecondPrompt(moodDescriptions) {
     return `You are a music recommendation system. Your job is to recommend real, popular songs based on the input mood, themes, and genres.
   
   Follow these rules strictly:
   
-  1. Prioritize matching mood + genres, but relax genre match if too few valid songs exist.
-  2. Avoid recommending the same artist or song as in past outputs.
-  3. Max 1 track per artist.
-  4. Recommend up to 5 songs per genre. If fewer than 5 exist, return fewer instead of guessing or repeating.
-  5. Only recommend songs that exist and are well-known. Do not invent.
-  6. Output Format: Return your answer in valid JSON only, using double quotes for all keys and string values.
+  1. **ANTI-REPETITION RULE**: Avoid recommending the same artists or songs that might have been suggested in previous requests. Prioritize variety and diversity.
+  
+  2. **ARTIST DIVERSITY**: Maximum 1 track per artist. Never repeat the same artist twice.
+  
+  3. **MUSICAL VARIETY**: Include a mix of different musical styles, eras, and cultural backgrounds within the same genre when possible.
+  
+  4. **MOOD PRIORITY**: Prioritize matching mood + genres, but relax genre match if too few valid songs exist.
+  
+  5. **QUANTITY CONTROL**: Recommend up to 5 songs per genre. If fewer than 5 exist, return fewer instead of guessing or repeating.
+  
+  6. **QUALITY ASSURANCE**: Only recommend songs that exist and are well-known. Do not invent or guess song titles.
+  
+  7. **ERA DIVERSITY**: Mix songs from different decades when possible (e.g., don't recommend only 2020s songs).
+  
+  8. **CULTURAL VARIETY**: Include diverse cultural and regional artists when the genre allows.
+  
+  Output Format: Return your answer in valid JSON only, using double quotes for all keys and string values.
 
   ---
   
